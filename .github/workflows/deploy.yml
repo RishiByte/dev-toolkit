@@ -16,7 +16,15 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  build:
+    deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/deploy-pages@v2
+        with:
+          branch: gh-pages
+          folder: public
+build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
