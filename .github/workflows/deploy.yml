@@ -50,10 +50,12 @@ jobs:
 
       - name: Comment on related PRs
         uses: actions/github-script@v6
+        env:
+          DEPLOYMENT_URL: ${{ steps.deployment.outputs.page_url }}
         with:
           script: |
             const { owner, repo } = context.repo;
-            const deploymentUrl = '${{ steps.deployment.outputs.page_url }}';
+            const deploymentUrl = process.env.DEPLOYMENT_URL;
 
             const { data: prs } = await github.rest.pulls.list({
               owner,
@@ -75,12 +77,7 @@ jobs:
                     owner,
                     repo,
                     issue_number: pr.number,
-                    body: `🚀 **Deployed Successfully!** 🚀
-
-Your changes are now live on GitHub Pages:
-👉 ${deploymentUrl}
-
-Thanks for contributing to DevToolkit! 🛠️✨`
+                    body: '🚀 **Deployed Successfully!** 🚀\n\nYour changes are now live on GitHub Pages:\n👉 ' + deploymentUrl + '\n\nThanks for contributing to DevToolkit! 🛠️✨'
                   });
                 }
               }
