@@ -16,15 +16,7 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-    deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions/deploy-pages@v2
-        with:
-          branch: gh-pages
-          folder: public
-build:
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -32,33 +24,28 @@ build:
 
       - name: Setup Pages
         uses: actions/configure-pages@v3
-        with:
-            enablement: true
 
       - name: Build
         run: |
-          # Since this is a static site, just copy files
           echo "Building DevToolkit..."
           ls -la
 
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v4
+        uses: actions/upload-pages-artifact@v3
         with:
-          path: '.'
+          path: './public'
 
   deploy:
     if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+    needs: build
+    runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    needs: build
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v2
-        with:
-            github_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Comment on related PRs
         uses: actions/github-script@v6
@@ -67,7 +54,6 @@ build:
             const { owner, repo } = context.repo;
             const deploymentUrl = '${{ steps.deployment.outputs.page_url }}';
 
-            // Find recent merged PRs
             const { data: prs } = await github.rest.pulls.list({
               owner,
               repo,
@@ -83,19 +69,17 @@ build:
                 const now = new Date();
                 const diffHours = (now - mergedDate) / (1000 * 60 * 60);
 
-                // Comment on PRs merged in the last 24 hours
                 if (diffHours < 24) {
                   await github.rest.issues.createComment({
                     owner,
                     repo,
                     issue_number: pr.number,
-                    body: |
-                      🚀 **Deployed Successfully!** 🚀
+                    body: `🚀 **Deployed Successfully!** 🚀
 
-                      Your changes are now live on GitHub Pages:
-                      👉 ${{ steps.deployment.outputs.page_url }}
+Your changes are now live on GitHub Pages:
+👉 ${deploymentUrl}
 
-                      Thanks for contributing to DevToolkit! 🛠️✨
+Thanks for contributing to DevToolkit! 🛠️✨`
                   });
                 }
               }
